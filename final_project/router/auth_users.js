@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 let books = require("./booksdb.js");
 const regd_users = express.Router();
 
+
 let users = [];
 
 const isValid = (username)=>{ //returns boolean
@@ -47,6 +48,7 @@ regd_users.post("/login", (req,res) => {
   if (authenticatedUser(username, password)) {
       // Generate JWT access token
       let accessToken = jwt.sign({
+            username:username,
           data: password
       }, 'access', { expiresIn: 60 * 60 });
 
@@ -66,7 +68,34 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   //return res.status(300).json({message: "Yet to be implemented"});
   let isbn = req.params.isbn;
   let book = books[isbn];
+  let bookReviews = book.reviews;
+  let reviewers = Object.keys(bookReviews)
+  //console.log("user:"+ req.session.user);
+  //console.log("user1:"+ req.session.user.username);
+  console.log("user2:"+ req.user.username);
+  //console.log("user 4: "+JSON.stringify(req.user,null,4));
+  let review =req.body.review;
+  if(!review){
+    if( reviewers.length <1){
+    books[isbn].reviews.push({"user":req.user.username,"review":review});
+    console.log("review added");
+  }
+  for (let reviewer of reviewers){
+    console.log("reviewer" + reviewer);
+if(reviewer === req.user.username){
+books[isbn].reviews[reviewer].review = review;
+console.log("review updated...");
+}else{
+    books[isbn].reviews.push({"user":req.user.username,"review":review});
+    console.log("review added" +review);
+}
+  }
+  return res.status(300).json({message: "thank you for your valuable review"});
+}else{
+    return res.status(300).json({message: "No review provided"});    
+}
   //if(book.reviews)
+  
 });
 
 module.exports.authenticated = regd_users;
