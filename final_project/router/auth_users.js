@@ -69,33 +69,44 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   let isbn = req.params.isbn;
   let book = books[isbn];
   let bookReviews = book.reviews;
-  let reviewers = Object.keys(bookReviews)
-  //console.log("user:"+ req.session.user);
-  //console.log("user1:"+ req.session.user.username);
-  console.log("user2:"+ req.user.username);
-  //console.log("user 4: "+JSON.stringify(req.user,null,4));
-  let review =req.body.review;
-  if(!review){
-    if( reviewers.length <1){
-    books[isbn].reviews.push({"user":req.user.username,"review":review});
-    console.log("review added");
-  }
-  for (let reviewer of reviewers){
-    console.log("reviewer" + reviewer);
-if(reviewer === req.user.username){
-books[isbn].reviews[reviewer].review = review;
-console.log("review updated...");
-}else{
-    books[isbn].reviews.push({"user":req.user.username,"review":review});
-    console.log("review added" +review);
-}
-  }
-  return res.status(300).json({message: "thank you for your valuable review"});
-}else{
+  let reviewers = Object.keys(bookReviews);
+  let review =req.query.review;
+  if(review===""){
     return res.status(300).json({message: "No review provided"});    
-}
+    }else{
+        if( reviewers.length <1){
+            books[isbn].reviews.push({"user":req.user.username,"review":review});
+            return res.status(300).json({message: "thank you for your valuable review"});
+        }
+        for (let i of reviewers){
+            if(books[isbn].reviews[i].user === req.user.username){
+                books[isbn].reviews[i].review = review;
+                return res.status(300).json({message: "thank you for your valuable review, review updated"});
+            }else{
+                books[isbn].reviews.push({"user":req.user.username,"review":review});
+                return res.status(300).json({message: "thank you for your valuable review"});
+            }
+        }
+    }
   //if(book.reviews)
   
+});
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    let isbn = req.params.isbn;
+  let book = books[isbn];
+  let bookReviews = book.reviews;
+  let reviewers = Object.keys(bookReviews);
+  books[isbn].reviews = books[isbn].reviews.filter((review) => review.user != req.user.username );
+  /*for (let i of reviewers){
+    if(books[isbn].reviews[i].user === req.user.username){
+        books[isbn].reviews[i].review = review;
+        users = users.filter((user) => user.email != email);
+        
+        return res.status(300).json({message: "review deleted"});
+    }
+}*/
+return res.status(300).json({message: "Reviews deleted"});
 });
 
 module.exports.authenticated = regd_users;
